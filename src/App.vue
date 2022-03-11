@@ -26,7 +26,7 @@
           style="color: white"
           @click="loadLocal"
           id=""
-          :icon="Upload"
+          :icon="TakeawayBox"
           >导入本地数据</el-button
         >
         <el-button
@@ -43,41 +43,42 @@
     </header>
     <div class="text">{{ tips }}</div>
     <div class="schart" v-show="DataShow">
-      <div v-for="(item, index) in chartsData" :key="index">
+      <div class="schart-item" v-for="(item, index) in chartsData" :key="index" v-show="item.total > 0">
         <h3>{{ item.title }}</h3>
-        <div class="schart-box">
-          <div class="text-box">
+        <p class="gray">{{ item.startTime }} 至 {{ item.endTime }}</p>
+        <div class="chart-box">
+          <v-chart class="chart" :option="item.options" autoresize></v-chart>
+        </div>
+        <div class="text-box">
             <p>
-              抽取次数:{{ item.total }},目前已抽
-              <el-tag>
+              一共：<el-tag class="tag" size="small">{{ item.total }}</el-tag> <span v-if="item.noGoldTimes">已累计
+              <el-tag class="tag" size="small">
                 {{ item.noGoldTimes }}
               </el-tag>
-              发没出金
+              抽未出金</span>
             </p>
-
-            <p>
-              五星角色次数:{{ item.level_5_role.length }}
-              <span v-for="item in item.level_5_role" :key="item[0]">
-                <el-tag type="success" class="tag">
+            
+            <ul class="">
+              <li class="gold">
+                五星：{{ item.level_5.count }} <el-tag class="tag" size="small">{{ item.level_5.chance }}</el-tag>
+              </li>
+              <li class="purple">
+                四星：{{ item.level_4.count }} <el-tag class="tag" size="small">{{ item.level_4.chance }}</el-tag>
+              </li>
+              <li class="blue">
+                三星：{{ item.level_4.count }} <el-tag class="tag" size="small">{{ item.level_3.chance }}</el-tag>
+              </li>
+            </ul>
+            <p class="gold" v-if="item.level_5.count">
+              五星历史记录：
+              <span v-for="(item, index) in item.level_5.list" :key="item[0]">
+                <el-tag size="small" type="success" class="tag">
                   {{ `${item[1]}(${item[5]})` }}
                 </el-tag>
               </span>
             </p>
-            <p>四星角色次数:{{ item.level_4_role.length }}</p>
-            <p>四星武器次数:{{ item.level_4_weapons.length }}</p>
-            <p>三星武器次数:{{ item.level_3_Weapons.length }}</p>
-            <ul class="">
-              <li v-for="(each, i) in item.probability" :key="i">
-                {{ each.title }}: <el-tag>{{ each.chance }}</el-tag>
-              </li>
-            </ul>
           </div>
-          <div class="chart-box">
-            <v-chart class="chart" :option="item.options" autoresize></v-chart>
-          </div>
-        </div>
       </div>
-      
     </div>
   </div>
 </template>
@@ -86,7 +87,7 @@
 import { ref, reactive } from "vue";
 import * as echarts from "echarts";
 import { ElMessage } from "element-plus";
-import { Search, Download, Upload } from '@element-plus/icons-vue'
+import { Search, Download, TakeawayBox } from '@element-plus/icons-vue'
 import { local } from "./util/storage";
 import { GachaUrl } from "./api/baseUrl";
 import { getGachaLog, gachaTypes as gachaType } from "./api/data";
@@ -100,6 +101,27 @@ const chartsData = ref(reactive([]))
 let AuthKey = "";
 let AuthKeyVer = "1";
 let Lang = "zh-cn";
+
+
+const configStyle = {
+  key2title: {
+    level_3_Weapons: '三星武器',
+    level_4_weapons: '四星武器',
+    level_5_weapons: '五星武器',
+    level_4_role: '四星角色',
+    level_5_role: '五星角色'
+  },
+  style: {
+    level_3_Weapons: 'blue',
+    level_4_weapons: 'purple',
+    level_5_weapons: 'gold',
+    level_4_role: 'purple',
+    level_5_role: 'gold',
+    level_4: 'purple',
+    level_5: 'gold',
+    level_3: 'blue'
+  }
+}
 
 const tmpData = reactive({
   level_3_Weapons: [],
@@ -171,8 +193,6 @@ const main = async (uri) => {
       }
     }
     //第一个数据
-    // console.log(logs);
-    // GachData.push(logs);
     GachDataObj[gacha_type] = logs;
   }
   console.log("获取抽卡记录结束");
@@ -185,6 +205,10 @@ const main = async (uri) => {
 
 //查询
 const queryFn = () => {
+  if (!url.value) {
+    tips.value = '请输入url'
+    return false
+  }
   main(url.value);
 };
 
@@ -200,12 +224,8 @@ const genCharts = (dataObj) => {
   DataShow.value = true; //显示数据
 
   Object.keys(dataObj).forEach((key, index) => {
-    const config = Upactivity(dataObj[key], key)
-    let id = `each_${index}`
-    chartsData.value.push(config)
-
-    // let EChart = echarts.init(Dom);
-    // EChart.setOption(config);
+    const result = Upactivity(dataObj[key], key)
+    chartsData.value.push(result)
   })
 }
 
@@ -217,63 +237,61 @@ const genCharts = (dataObj) => {
  * "302""武器活动祈愿"
  */
 const Upactivity = (dataObj, key) => {
-  const tmpObj = reactive({
+  let tmpObj = reactive({
     title: '',
-    level_3_Weapons: [],
-    level_4_role: [],
-    level_4_weapons: [],
-    level_5_role: [],
     total: 0,
     noGoldTimes: 0,
-    probability: [],
   }); //up角色数据
 
   let data = statistical(dataObj);
-
+  
+  tmpObj = Object.assign(tmpObj, data)
   tmpObj.title = getTitle(key);
-  tmpObj.level_3_Weapons.push(...data.level_3_Weapons);
-  tmpObj.level_4_role.push(...data.level_4_role);
-  tmpObj.level_4_weapons.push(...data.level_4_weapons);
-  tmpObj.level_5_role.push(...data.level_5_role);
-  tmpObj.total = data.total;
-  tmpObj.noGoldTimes = data.noGoldTimes;
-  tmpObj.probability.push(...data.probability);  
+
+  const chartData = [
+    {
+      value: data.level_3_Weapons.length,
+      name: "三星武器",
+    },
+    {
+      value: data.level_4_role.length,
+      name: "四星角色",
+    },
+    {
+      value: data.level_4_weapons.length,
+      name: "四星武器",
+    },
+    {
+      value: data.level_5_role.length,
+      name: "五星角色",
+    },
+    { value: data.level_5_weapons.length, name: "五星武器" },
+  ]
   
   let config = {
-    title: { text: getTitle(key) },
-    tooltip: {},
-    // color: ["skyblue", "#9b75b2", "#9b75b2", "#d68d4d"],
+    // title: { text: getTitle(key), left: 'center' },
+    tooltip: {
+      trigger: 'item'
+    },
+    legend: {
+      show: true
+    },
     series: [
       {
         name: "数量",
         type: "pie",
-        data: [
-          {
-            value: data.level_3_Weapons.length,
-            name: "三星武器",
-            itemStyle: { color: "skyblue" },
-          },
-          {
-            value: data.level_4_role.length,
-            name: "四星角色",
-            itemStyle: { color: "#9b75b2" },
-          },
-          {
-            value: data.level_4_weapons.length,
-            name: "四星武器",
-            itemStyle: { color: "#9b75b2" },
-          },
-          {
-            value: data.level_5_role.length,
-            name: "五星角色",
-            itemStyle: { color: "#d68d4d" },
-          },
-          // { value: data.level_5_weapons.length, name: "五星武器" },
-        ],
+        data: chartData.filter(item => item.value > 0),
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
       },
     ],
-    radius: "50%",
-    center: ["50%", "50%"],
+    radius: '50%',
+    center: ["50%", "60%"],
   };
 
   tmpObj.options = config
@@ -287,68 +305,8 @@ const Export = ()=>{
   let data = local.get('GachDataObj')
   save(data)
 }
-// setTimeout(() => {
-//   // Upactivity();
-//   // statistical();
-// }, 0);
-// // const each = ref(null);
 </script>
 
 <style scoped>
-html {
-  font-size: 6.25vw;
-}
-* {
-  margin: 0;
-  padding: 0;
-}
-.search,
-.schart-box,
-.center,.export {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  /* justify-content: center; */
-}
-.schart-box {
-  min-height: 200px;
-  margin-bottom: 50px;
-}
 
-.url {
-  text-align: center;
-  width: 400px;
-}
-.text {
-  margin-left: 10rem;
-  color: #ffa256e1;
-}
-.button {
-  margin-left: 0.25rem;
-}
-.schart {
-  margin-top: 3rem;
-}
-.text-box {
-  font-size: 0.9rem;
-  margin-right: 20px;
-  min-width: 200px;
-}
-.tag {
-  margin: 0 0.1rem;
-}
-p {
-  margin: 10px 0;
-}
-li {
-  list-style: none;
-}
-.chart-box {
-  width: 30rem;
-  height: 15rem
-}
-.chart {
-  width: 100%;
-  height: 100%;
-}
 </style>

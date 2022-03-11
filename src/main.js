@@ -25,6 +25,7 @@ use([
 
 //样式引入
 import 'element-plus/dist/index.css';
+import './assets/style.css';
 
 const app = createApp(App)
 
