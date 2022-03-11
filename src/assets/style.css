@@ -22,8 +22,8 @@ body {
 }
 
 .url {
-text-align: center;
-width: 400px;
+    text-align: center;
+    width: 400px;
 }
 .text {
     margin-left: 10rem;
@@ -35,6 +35,7 @@ width: 400px;
 .schart {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     margin-top: 30px;
 }
 .schart-item {
@@ -57,7 +58,7 @@ li {
     margin-bottom: 10px;
 }
 .chart-box {
-    width: 300px;
+    width: 320px;
     height: 240px;
     margin: 30px auto 20px;
 }

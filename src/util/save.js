@@ -1,4 +1,5 @@
 //保存文件模块；
+import dayjs from 'dayjs'
 import ExcelJS from 'exceljs';
 import FileSaver from 'file-saver';
 import {
@@ -11,7 +12,7 @@ const save = (DataObj) => {
         if (Object.hasOwnProperty.call(DataObj, key)) {
             const element = DataObj[key];
             console.log(key, getTitle(key));
-            const sheet = workbook.addWorksheet(title(key), {
+            const sheet = workbook.addWorksheet(getTitle(key), {
                 views: [{
                     state: "frozen",
                     ySplit: 1
@@ -142,8 +143,8 @@ const save = (DataObj) => {
         }
 
     }
-    const timestamp = new Date().getTime();
-    const fileName = `原神抽卡记录导出_${timestamp}.xlsx`;
+    const timestamp = dayjs().format('YYYYMMDDHHmmssZ')
+    const fileName = `原神抽卡记录导出_${timestamp}`;
     workbook.xlsx.writeBuffer().then((buffer) => {
         FileSaver(
             new Blob([buffer], {

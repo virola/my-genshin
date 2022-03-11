@@ -1,4 +1,3 @@
-
 <template>
   <div>
     <header>
@@ -57,7 +56,7 @@
               </el-tag>
               抽未出金</span>
             </p>
-            
+
             <ul class="">
               <li class="gold">
                 五星：{{ item.level_5.count }} <el-tag class="tag" size="small">{{ item.level_5.chance }}</el-tag>
@@ -71,7 +70,7 @@
             </ul>
             <p class="gold" v-if="item.level_5.count">
               五星历史记录：
-              <span v-for="(item, index) in item.level_5.list" :key="item[0]">
+              <span v-for="(item) in item.level_5.list" :key="item[0]">
                 <el-tag size="small" type="success" class="tag">
                   {{ `${item[1]}(${item[5]})` }}
                 </el-tag>
@@ -80,19 +79,22 @@
           </div>
       </div>
     </div>
+    <p v-show="DataShow">
+        下载的表格可以上传到这个：
+        <a class="blue" target="_blank" :href="AnalysisUrl">抽卡分析工具</a>
+    </p>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive } from "vue";
-import * as echarts from "echarts";
 import { ElMessage } from "element-plus";
 import { Search, Download, TakeawayBox } from '@element-plus/icons-vue'
 import { local } from "./util/storage";
-import { GachaUrl } from "./api/baseUrl";
+import { GachaUrl, AnalysisUrl } from "./api/baseUrl";
 import { getGachaLog, gachaTypes as gachaType } from "./api/data";
 import { sleep, statistical, getTitle } from "./util/method";
-import {save} from './util/save'
+import { save } from './util/save'
 const DataShow = ref(false);
 const url = ref(""); //new URL(GachaUrl);
 const tips = ref("");
@@ -102,36 +104,25 @@ let AuthKey = "";
 let AuthKeyVer = "1";
 let Lang = "zh-cn";
 
-
-const configStyle = {
-  key2title: {
-    level_3_Weapons: '三星武器',
-    level_4_weapons: '四星武器',
-    level_5_weapons: '五星武器',
-    level_4_role: '四星角色',
-    level_5_role: '五星角色'
-  },
-  style: {
-    level_3_Weapons: 'blue',
-    level_4_weapons: 'purple',
-    level_5_weapons: 'gold',
-    level_4_role: 'purple',
-    level_5_role: 'gold',
-    level_4: 'purple',
-    level_5: 'gold',
-    level_3: 'blue'
-  }
-}
-
-const tmpData = reactive({
-  level_3_Weapons: [],
-  level_4_role: [],
-  level_4_weapons: [],
-  level_5_role: [],
-  total: 0,
-  noGoldTimes: 0,
-  probability: [],
-}); //up角色数据
+// const configStyle = {
+//   key2title: {
+//     level_3_Weapons: '三星武器',
+//     level_4_weapons: '四星武器',
+//     level_5_weapons: '五星武器',
+//     level_4_role: '四星角色',
+//     level_5_role: '五星角色'
+//   },
+//   style: {
+//     level_3_Weapons: 'blue',
+//     level_4_weapons: 'purple',
+//     level_5_weapons: 'gold',
+//     level_4_role: 'purple',
+//     level_5_role: 'gold',
+//     level_4: 'purple',
+//     level_5: 'gold',
+//     level_3: 'blue'
+//   }
+// }
 
 //获取每一页数据
 const getGachaLogs = async (name, key) => {
@@ -222,6 +213,7 @@ const loadLocal = () => {
 // 生成图数组
 const genCharts = (dataObj) => {
   DataShow.value = true; //显示数据
+  chartsData.value = [];
 
   Object.keys(dataObj).forEach((key, index) => {
     const result = Upactivity(dataObj[key], key)
@@ -244,7 +236,7 @@ const Upactivity = (dataObj, key) => {
   }); //up角色数据
 
   let data = statistical(dataObj);
-  
+
   tmpObj = Object.assign(tmpObj, data)
   tmpObj.title = getTitle(key);
 
@@ -267,7 +259,7 @@ const Upactivity = (dataObj, key) => {
     },
     { value: data.level_5_weapons.length, name: "五星武器" },
   ]
-  
+
   let config = {
     // title: { text: getTitle(key), left: 'center' },
     tooltip: {
@@ -295,7 +287,7 @@ const Upactivity = (dataObj, key) => {
   };
 
   tmpObj.options = config
-  
+
   return tmpObj
 };
 
