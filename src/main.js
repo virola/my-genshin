@@ -12,14 +12,16 @@ import {
 } from 'echarts/charts'
 import {
   GridComponent,
-  TooltipComponent
+  TooltipComponent,
+  LegendComponent
 } from 'echarts/components'
 
 use([
   CanvasRenderer,
   PieChart,
   GridComponent,
-  TooltipComponent
+  TooltipComponent,
+  LegendComponent
 ])
 
 

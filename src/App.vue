@@ -70,10 +70,13 @@
             </ul>
             <p class="gold" v-if="item.level_5.count">
               五星历史记录：
-              <span v-for="(item) in item.level_5.list" :key="item[0]">
-                <el-tag size="small" type="success" class="tag">
-                  {{ `${item[1]}(${item[5]})` }}
-                </el-tag>
+              <span class="tag" :class="{
+                  'color-green': item[5] <= 30,
+                  'color-blue': item[5] > 30 && item[5] <= 50,
+                  'color-red': item[5] > 75,
+                  'color-middle': item[5] > 50 && item[5] <= 75
+                }" v-for="(item) in item.level_5.list" :key="item[0]">
+                {{ `${item[1]}(${item[5]})` }}
               </span>
             </p>
           </div>
@@ -103,26 +106,6 @@ const chartsData = ref(reactive([]))
 let AuthKey = "";
 let AuthKeyVer = "1";
 let Lang = "zh-cn";
-
-// const configStyle = {
-//   key2title: {
-//     level_3_Weapons: '三星武器',
-//     level_4_weapons: '四星武器',
-//     level_5_weapons: '五星武器',
-//     level_4_role: '四星角色',
-//     level_5_role: '五星角色'
-//   },
-//   style: {
-//     level_3_Weapons: 'blue',
-//     level_4_weapons: 'purple',
-//     level_5_weapons: 'gold',
-//     level_4_role: 'purple',
-//     level_5_role: 'gold',
-//     level_4: 'purple',
-//     level_5: 'gold',
-//     level_3: 'blue'
-//   }
-// }
 
 //获取每一页数据
 const getGachaLogs = async (name, key) => {
@@ -261,7 +244,9 @@ const Upactivity = (dataObj, key) => {
   ]
 
   let config = {
-    // title: { text: getTitle(key), left: 'center' },
+    grid: {
+        top: '10%'
+    },
     tooltip: {
       trigger: 'item'
     },
