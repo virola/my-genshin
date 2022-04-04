@@ -143,8 +143,8 @@ const save = (DataObj) => {
         }
 
     }
-    const timestamp = dayjs().format('YYYYMMDDHHmmssZ')
-    const fileName = `原神抽卡记录导出_${timestamp}`;
+    const timestamp = dayjs().format('YYYYMMDD_HHmmss')
+    const fileName = `抽卡_${timestamp}`;
     workbook.xlsx.writeBuffer().then((buffer) => {
         FileSaver(
             new Blob([buffer], {
