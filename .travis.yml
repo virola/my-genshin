@@ -10,7 +10,8 @@ script:
 
 after_success:
   - ls ./dist
-  - curl -T ./dist -u ${CODING_USER}:${CODING_PWD} "https://virola-generic.pkg.coding.net/mytools/files/genshin-dist?version=latest"
+  - tar -zcf dist.tar.gz ./dist
+  - curl -T dist.tar.gz -u ${CODING_USER}:${CODING_PWD} "https://virola-generic.pkg.coding.net/mytools/files/genshin-dist.tar.gz?version=latest"
 
 branches:
   only:
