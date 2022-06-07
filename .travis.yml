@@ -1,0 +1,17 @@
+language: node_js
+node_js:
+  - 12
+
+install:
+  - npm install
+
+script:
+- npm run build
+
+after_success:
+  - ls ./dist
+  - curl -T ./dist -u ${CODING_USER}:${CODING_PWD} "https://virola-generic.pkg.coding.net/mytools/files/genshin-dist?version=latest"
+
+branches:
+  only:
+    - main
