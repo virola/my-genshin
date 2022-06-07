@@ -1,12 +1,12 @@
 language: node_js
 node_js:
-  - 12
+  - 16
 
 install:
-  - npm install
+  - yarn install
 
 script:
-- npm run build
+  - yarn build
 
 after_success:
   - ls ./dist
